@@ -33,7 +33,7 @@ sysParams = [m1; m2; l; g];
 %% System dynamics model
 optConToolsModObj = OptConToolsMod(Ek, Ep, states, controls, sysParams);
 sysDynamicsMod = optConToolsModObj.getSysDynMod();
-matFuncRootPath = '/media/dqviet/DATA/research/optConTools/build';
+matFuncRootPath = fullfile(fileparts(fileparts(fileparts([mfilename('fullpath'),'.m']))), 'build');
 matFunctionPath = optConToolsModObj.getSysDynMod2MatFunc(matFuncRootPath, sysDynamicsMod);
 
 %% Results
