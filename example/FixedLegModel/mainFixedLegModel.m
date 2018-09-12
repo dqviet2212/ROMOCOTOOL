@@ -75,7 +75,7 @@ sysParams = [m1; l1; L1; m2; l2; L2; m3; l3; L3; g];
 optConToolsModObj = OptConToolsMod(Ek, Ep, states, controls, sysParams);
 sysDynamicsMod = optConToolsModObj.getSysDynMod();
 matFuncRootPath = fullfile(optConToolsRootPath, 'example', 'FixedLegModel');
-matFunctionPath = optConToolsModObj.getSysDynMod2MatFunc(matFuncRootPath, sysDynamicsMod);
+[sysDynMatPath, sysDynPath] = optConToolsModObj.getSysDynMod2MatFunc(matFuncRootPath, sysDynamicsMod);
 
 %% Results
 nStates = sysDynamicsMod.nStates;
@@ -85,7 +85,6 @@ passiveConInd = sysDynamicsMod.passiveConInd;
 M = sysDynamicsMod.M;
 C = sysDynamicsMod.C;
 G = sysDynamicsMod.G;
-EoM = sysDynamicsMod.EoM;
 disp('******************************************************************');    
 fprintf('Number of state variable: nStates = %d\n', nStates);
 disp('******************************************************************');    
@@ -103,9 +102,6 @@ disp(C);
 disp('******************************************************************');
 disp('Garity maxtrix G:')
 disp(G);
-disp('******************************************************************');
-disp('Equation of motion:')
-disp(EoM);
 
 toc
 return;

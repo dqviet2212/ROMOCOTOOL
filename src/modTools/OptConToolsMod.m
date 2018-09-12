@@ -145,16 +145,15 @@ classdef OptConToolsMod < handle
                 if isempty(passiveConInd)
                     passiveConInd = 0;
                 end
-                nControls = length(activeConInd);                
-                EoM = [velocities; M\(obj.controls - C*velocities - G)];                
+                nControls = length(activeConInd);
+                %
                 sysDynamicsMod.nStates = nStates;
                 sysDynamicsMod.nControls = nControls;
                 sysDynamicsMod.activeConInd = activeConInd;
-                sysDynamicsMod.passiveConInd = passiveConInd;
+                sysDynamicsMod.passiveConInd = passiveConInd;                
                 sysDynamicsMod.M = M;
                 sysDynamicsMod.C = C;
                 sysDynamicsMod.G = G;
-                sysDynamicsMod.EoM = EoM;
             else
                 if ~passCond1
                     error('Inertia matrix is not symmetric');
@@ -174,32 +173,57 @@ classdef OptConToolsMod < handle
         % @Output:
         % matFunctionPath: Matlab function path of system dynamics - char type     
         %=================================================================%
-        function matFunctionPath = getSysDynMod2MatFunc(obj, matFuncRootPath, sysDynamicsMod)
+        function [sysDynMatPath, sysDynPath] = getSysDynMod2MatFunc(obj, matFuncRootPath, sysDynamicsMod)
             if ~ischar(matFuncRootPath)
                 error('The Matlab function path should be char type');
             end
-            matFunctionPath = fullfile(matFuncRootPath, 'getSysDynamics.m');
-            funcHeader = {'======================================================================%';...
-                          ' Description: This function represents the equation of motion of the dynamical system dStates = getSysDynamics(states, controls, sysParams)';...
+            tmpControls = obj.controls;
+            if isnumeric(tmpControls)
+                tmpControls = sym(tmpControls);
+            end
+            if (sysDynamicsMod.passiveConInd ~= 0)
+                tmpControls(sysDynamicsMod.passiveConInd) = sym('virCon');
+            end
+            % System dynamics matrices
+            sysDynMatPath = fullfile(matFuncRootPath, 'getSysDynMatrices.m');
+            sysDynMatInputVars = {obj.states, tmpControls, obj.sysParams};
+            sysDynMatFuncHeader = {'======================================================================%';...
+                          ' Description: This function computes Inertia, Coriolis and gravity matrices of the dynamical system [M, C, G] = getSysDynMatrices(states, controls, sysParams)';...
+                          ' @Inputs:';...
+                          ' states: State variable of the dynamical system';...  
+                          ' controls: Control inputs of the dynamical system';...
+                          ' sysParams: Physical parameters of the dynamical system';...
+                          ' @Output:';...
+                          ' M: Inertia matrix of the dynamical system';...
+                          ' C: Coriolis matrix of the dynamical system';...
+                          ' G: Gravity matrix of the dynamical system';...
+                          ' Version: 1.0';...
+                          ' Author: Quoc-Viet Dang';...
+                          '======================================================================%';...
+                          };  
+            matlabFunction(sysDynamicsMod.M, sysDynamicsMod.C, sysDynamicsMod.G, 'File', sysDynMatPath, 'Vars', sysDynMatInputVars, 'Outputs', {'M', 'C', 'G'}, 'Sparse', true, 'Comments', sysDynMatFuncHeader);
+            % State-space model
+            nStates = length(obj.states);            
+            nJoints = 0.5*nStates;
+            velocities = obj.states((nJoints+1):end, 1);
+            M = sym('M'); C = sym('C'); G = sym('G');
+            dStates = [velocities; M\(obj.controls - C*velocities - G)];
+            sysDynPath = fullfile(matFuncRootPath, 'getSysDynamics.m');
+            sysDynInputVars = {obj.states, tmpControls, [M, C, G]};
+            sysDynFuncHeader = {'======================================================================%';...
+                          ' Description: This function represents the state-space model of the dynamical system dStates = getSysDynamics(states, controls, sysParams)';...
                           ' @Inputs:';...
                           ' states: State variable of the dynamical system';...
                           ' controls: Control inputs of the dynamical system';...
                           ' sysParams: Physical parameters of the dynamical system';...
+                          ' sysDynMat = getSysDynMatrices(states, sysParams): Inertia, Coriolis and gravity matrices of the dynamical system';...
                           ' @Output:';...
                           ' dStates: Time derivative of state variable of the dynamical system';...
                           ' Version: 1.0';...
                           ' Author: Quoc-Viet Dang';...
                           '======================================================================%';...
                           };  
-            tmpControls = obj.controls;
-            if isnumeric(tmpControls)
-                tmpControls = sym(tmpControls);
-            end
-            if (sysDynamicsMod.passiveConInd ~= 0)
-                tmpControls(sysDynamicsMod.passiveConInd) = sym('virtualControl');
-            end
-            inputVars = {obj.states, tmpControls, obj.sysParams};
-            matlabFunction(sysDynamicsMod.EoM, 'File', matFunctionPath, 'Vars', inputVars, 'Outputs', {'dStates'}, 'Sparse', true, 'Comments', funcHeader);
+            matlabFunction(dStates, 'File', sysDynPath, 'Vars', sysDynInputVars, 'Outputs', {'dStates'}, 'Sparse', true, 'Comments', sysDynFuncHeader);
         end
     end
 end

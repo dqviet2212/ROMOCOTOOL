@@ -37,7 +37,7 @@ matFuncRootPath = fullfile(fileparts(fileparts(fileparts([mfilename('fullpath'),
 if (exist(matFuncRootPath, 'dir') ~= 7)
     mkdir(matFuncRootPath);
 end
-matFunctionPath = optConToolsModObj.getSysDynMod2MatFunc(matFuncRootPath, sysDynamicsMod);
+[sysDynMatPath, sysDynPath] = optConToolsModObj.getSysDynMod2MatFunc(matFuncRootPath, sysDynamicsMod);
 
 %% Results
 nStates = sysDynamicsMod.nStates;
@@ -47,7 +47,7 @@ passiveConInd = sysDynamicsMod.passiveConInd;
 M = sysDynamicsMod.M;
 C = sysDynamicsMod.C;
 G = sysDynamicsMod.G;
-EoM = sysDynamicsMod.EoM;
+% SS = sysDynamicsMod.SS;
 disp('******************************************************************');    
 fprintf('Number of state variable: nStates = %d\n', nStates);
 disp('******************************************************************');    
@@ -66,7 +66,7 @@ disp('******************************************************************');
 disp('Garity maxtrix G:')
 disp(G);
 disp('******************************************************************');
-disp('Equation of motion:')
-disp(EoM);
+disp('State-space representation:')
+fprintf('%s\n%s\n', sysDynMatPath, sysDynPath);
 
 return;
