@@ -9,6 +9,7 @@
 restoredefaultpath;
 clearvars; close all; clc
 
+tic
 %% Addpath
 optConToolsRootPath = fileparts(fileparts(fileparts([mfilename('fullpath'),'.m'])));
 modToolsRootPath = fullfile(optConToolsRootPath, 'src', 'modTools');
@@ -106,4 +107,5 @@ disp('******************************************************************');
 disp('Equation of motion:')
 disp(EoM);
 
+toc
 return;

@@ -34,6 +34,9 @@ sysParams = [m1; m2; l; g];
 optConToolsModObj = OptConToolsMod(Ek, Ep, states, controls, sysParams);
 sysDynamicsMod = optConToolsModObj.getSysDynMod();
 matFuncRootPath = fullfile(fileparts(fileparts(fileparts([mfilename('fullpath'),'.m']))), 'build');
+if (exist(matFuncRootPath, 'dir') ~= 7)
+    mkdir(matFuncRootPath);
+end
 matFunctionPath = optConToolsModObj.getSysDynMod2MatFunc(matFuncRootPath, sysDynamicsMod);
 
 %% Results
