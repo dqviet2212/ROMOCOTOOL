@@ -1,28 +1,29 @@
 %*************************************************************************%
-% Author: Quoc-Viet DANG                                                  
-% Project: optConTools
+% Project: ROMOCOTOOL
 % Name: mainFixedLegModel.m
 % Type: matlab script
-% Version: 08 September 2018                                              
-% Description:
+% Version: 1.0
+% Description: This script is a sample how to use the modelling tool
+% RoModTool of ROMOCOTOOL project
+% Author: Quoc-Viet DANG
 %*************************************************************************%
 restoredefaultpath;
 clearvars; close all; clc
-
 tic
+
 %% Addpath
-optConToolsRootPath = fileparts(fileparts(fileparts([mfilename('fullpath'),'.m'])));
-modToolsRootPath = fullfile(optConToolsRootPath, 'src', 'modTools');
-addpath(modToolsRootPath);
+roMoCoToolRootPath = fileparts(fileparts(fileparts(fileparts([mfilename('fullpath'),'.m']))));
+roModToolRootPath = fullfile(roMoCoToolRootPath, 'src', 'roModTool');
+addpath(roModToolRootPath);
 
 %% Symbolic variables declaration
 syms g
 syms m1 l1 L1    % Thigh
 syms m2 l2 L2    % Shank
 syms m3 l3 L3    % Foot
-syms q1 dq1
-syms q2 dq2
-syms q3 dq3
+syms q1 dq1 d2q1
+syms q2 dq2 d2q2
+syms q3 dq3 d2q3
 syms u1 u2 u3
 
 %% Kinematic and potential energy
@@ -64,6 +65,8 @@ Ep = Ep1 + Ep2 + Ep3;
 positions = [q1; q2; q3];
 % Velocities
 velocities = [dq1; dq2; dq3];
+% Accelerations
+accelerations = [d2q1; d2q2; d2q3];
 % State variable
 states = [positions; velocities];
 % Controls
@@ -72,19 +75,22 @@ controls = [u1; u2; u3];
 sysParams = [m1; l1; L1; m2; l2; L2; m3; l3; L3; g];
 
 %% System dynamics model
-optConToolsModObj = OptConToolsMod(Ek, Ep, states, controls, sysParams);
-sysDynamicsMod = optConToolsModObj.getSysDynMod();
-matFuncRootPath = fullfile(optConToolsRootPath, 'example', 'FixedLegModel');
-[sysDynMatPath, sysDynPath] = optConToolsModObj.getSysDynMod2MatFunc(matFuncRootPath, sysDynamicsMod);
+roModToolObj = RoModTool(Ek, Ep, states, accelerations, controls, sysParams);
+sysDynMod = roModToolObj.getSysDynMod();
+matFuncRootPath = fullfile(roMoCoToolRootPath, 'example', 'FixedLegModel', 'build');
+if (exist(matFuncRootPath, 'dir') ~= 7)
+    mkdir(matFuncRootPath);
+end
+[sysDynMatPath, ssModPath, sysIDPath, sysFDPath] = roModToolObj.getSysDynMod2MatFunc(matFuncRootPath, sysDynMod);
 
 %% Results
-nStates = sysDynamicsMod.nStates;
-nControls = sysDynamicsMod.nControls;
-activeConInd = sysDynamicsMod.activeConInd;
-passiveConInd = sysDynamicsMod.passiveConInd;
-M = sysDynamicsMod.M;
-C = sysDynamicsMod.C;
-G = sysDynamicsMod.G;
+nStates = sysDynMod.nStates;
+nControls = sysDynMod.nControls;
+activeConInd = sysDynMod.activeConInd;
+passiveConInd = sysDynMod.passiveConInd;
+M = sysDynMod.M;
+C = sysDynMod.C;
+G = sysDynMod.G;
 disp('******************************************************************');    
 fprintf('Number of state variable: nStates = %d\n', nStates);
 disp('******************************************************************');    
@@ -102,6 +108,8 @@ disp(C);
 disp('******************************************************************');
 disp('Garity maxtrix G:')
 disp(G);
+disp('Root paths to system dynamics:')
+fprintf('%s\n%s\n%s\n%s\n', sysDynMatPath, ssModPath, sysIDPath, sysFDPath);
 
 toc
 return;

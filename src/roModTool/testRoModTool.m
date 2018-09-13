@@ -1,7 +1,7 @@
 %*************************************************************************%
 % Author: Quoc-Viet DANG                                                  
-% Project: optConTools
-% Name: testOptConToolsMod.m
+% Project: ROMOCOTOOL
+% Name: testRoModTool.m
 % Type: matlab script
 % Version: 08 September 2018                                              
 % Description:
@@ -11,7 +11,7 @@ clearvars; close all; clc
 
 %% Symbolic variables declaration
 syms m1 m2 l g
-syms q1 q2 dq1 dq2
+syms q1 q2 dq1 dq2 d2q1 d2q2
 syms u1 u2
 
 %% Kinematic and potential energy
@@ -23,6 +23,8 @@ Ep = simplify(m1*g*l*cos(q2));
 positions = [q1; q2];
 % Velocities
 velocities = [dq1; dq2];
+% Accelerations
+accelerations = [d2q1; d2q2];
 % State variable
 states = [positions; velocities];
 % Controls
@@ -31,23 +33,23 @@ controls = [u1; 0];
 sysParams = [m1; m2; l; g];
 
 %% System dynamics model
-optConToolsModObj = OptConToolsMod(Ek, Ep, states, controls, sysParams);
-sysDynamicsMod = optConToolsModObj.getSysDynMod();
+roModToolObj = RoModTool(Ek, Ep, states, accelerations, controls, sysParams);
+sysDynMod = roModToolObj.getSysDynMod();
 matFuncRootPath = fullfile(fileparts(fileparts(fileparts([mfilename('fullpath'),'.m']))), 'build');
 if (exist(matFuncRootPath, 'dir') ~= 7)
     mkdir(matFuncRootPath);
 end
-[sysDynMatPath, sysDynPath] = optConToolsModObj.getSysDynMod2MatFunc(matFuncRootPath, sysDynamicsMod);
+[sysDynMatPath, ssModPath, sysIDPath, sysFDPath] = roModToolObj.getSysDynMod2MatFunc(matFuncRootPath, sysDynMod);
 
 %% Results
-nStates = sysDynamicsMod.nStates;
-nControls = sysDynamicsMod.nControls;
-activeConInd = sysDynamicsMod.activeConInd;
-passiveConInd = sysDynamicsMod.passiveConInd;
-M = sysDynamicsMod.M;
-C = sysDynamicsMod.C;
-G = sysDynamicsMod.G;
-% SS = sysDynamicsMod.SS;
+nStates = sysDynMod.nStates;
+nControls = sysDynMod.nControls;
+activeConInd = sysDynMod.activeConInd;
+passiveConInd = sysDynMod.passiveConInd;
+M = sysDynMod.M;
+C = sysDynMod.C;
+G = sysDynMod.G;
+%
 disp('******************************************************************');    
 fprintf('Number of state variable: nStates = %d\n', nStates);
 disp('******************************************************************');    
@@ -66,7 +68,7 @@ disp('******************************************************************');
 disp('Garity maxtrix G:')
 disp(G);
 disp('******************************************************************');
-disp('State-space representation:')
-fprintf('%s\n%s\n', sysDynMatPath, sysDynPath);
+disp('Root paths to system dynamics:')
+fprintf('%s\n%s\n%s\n%s\n', sysDynMatPath, ssModPath, sysIDPath, sysFDPath);
 
 return;
