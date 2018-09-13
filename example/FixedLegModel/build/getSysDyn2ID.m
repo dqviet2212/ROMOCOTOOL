@@ -7,7 +7,7 @@ function torques = getSysDyn2ID(in1,in2,in3)
 
 %======================================================================%
 % Description: This function gives the inverse(backward) dynamics of system
-% acceleration = getSysDyn2ID(states, accelerations, [M, C, G])
+% torques = getSysDyn2ID(states, accelerations, [M, C, G])
 % @Inputs:
 % states: State variable of the dynamical system - column vector
 % accelerations: Accelerations of the dynamical system - column vector

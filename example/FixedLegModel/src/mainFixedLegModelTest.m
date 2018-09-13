@@ -25,17 +25,18 @@ nJoints = 3;
 positions = 0.1*ones(nJoints, 1);
 % Velocities
 velocities = 0.5*ones(nJoints, 1);
-% Accelerations
-accelerations = 0.8*ones(nJoints, 1);
 % State variable
 states = [positions; velocities];
 % Controls
-controls = 0.5*ones(nJoints, 1);
+controls = 0.3*ones(nJoints, 1);
 % System dynamics
 [M, C, G] = getSysDynMat(states, sysParams);
 dStates = getSysDynamics(states, controls, [M, C, G]);
 d2q = getSysDyn2FD(states, controls, [M, C, G]);
-torques = getSysDyn2ID(states, accelerations, [M, C, G])';
+torques = getSysDyn2ID(states, d2q, [M, C, G]);
+%
+errACC = d2q - dStates(nJoints+1:end, 1);
+errCON = controls - full(torques);
 %
 disp('******************************************************************');    
 disp('Inertia matrix M:');
@@ -49,5 +50,7 @@ disp(G);
 disp('******************************************************************');
 disp('Time-derivatives of state variable:')
 disp(dStates);
-disp(d2q);
-disp(torques);
+disp('Accelerations of the joint variables and error:')
+disp(full([d2q, errACC]));
+disp('Controls and error:')
+disp([full(torques), errCON]);
