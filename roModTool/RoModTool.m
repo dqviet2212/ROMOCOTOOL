@@ -68,18 +68,18 @@ classdef RoModTool < handle
         %   controls: Control inputs of the dynamical system - symbolic column vector
         %   sysParams: Physical parameters of the dynamical system - symbolic column vector
         % @Output:
-        % sysDynMod: System dynamics model - symbolic object
-        %   sysDynMod.nStates: Number of state variable - positive integer
-        %   sysDynMod.nControls: Number of active controls - positive integer
-        %   sysDynMod.activeConInd: Index of active controls - positive integer
-        %   sysDynMod.passiveConInd: Index of passive controls - scalar column vector
-        %   sysDynMod.M: Inertia matrix of the dynamical system - scalar column vector
-        %   sysDynMod.C: Coriolis matrix of the dynamical system - symbolic matrix
-        %   sysDynMod.G: Gravity matrix of the dynamical system - symbolic column vector        
+        % sysDyn: System dynamics - symbolic object
+        %   sysDyn.nStates: Number of state variable - positive integer
+        %   sysDyn.nControls: Number of active controls - positive integer
+        %   sysDyn.activeConInd: Index of active controls - positive integer
+        %   sysDyn.passiveConInd: Index of passive controls - scalar column vector
+        %   sysDyn.M: Inertia matrix of the dynamical system - scalar column vector
+        %   sysDyn.C: Coriolis matrix of the dynamical system - symbolic matrix
+        %   sysDyn.G: Gravity matrix of the dynamical system - symbolic column vector        
         %=================================================================%
-        function sysDynMod = getSysDynMod(obj)
+        function sysDyn = getSystemDynamics(obj)
             %% System dynamics            
-            nStates = length(obj.states);            
+            nStates = length(obj.states);
             nJoints = 0.5*nStates;
             positions = obj.states(1:nJoints, 1);
             velocities = obj.states((nJoints+1):end, 1);
@@ -156,13 +156,13 @@ classdef RoModTool < handle
                 end
                 nControls = length(activeConInd);
                 %
-                sysDynMod.nStates = nStates;
-                sysDynMod.nControls = nControls;
-                sysDynMod.activeConInd = activeConInd;
-                sysDynMod.passiveConInd = passiveConInd;                
-                sysDynMod.M = M;
-                sysDynMod.C = C;
-                sysDynMod.G = G;
+                sysDyn.nStates = nStates;
+                sysDyn.nControls = nControls;
+                sysDyn.activeConInd = activeConInd;
+                sysDyn.passiveConInd = passiveConInd;                
+                sysDyn.M = M;
+                sysDyn.C = C;
+                sysDyn.G = G;
             else
                 if ~passCond1
                     error('Inertia matrix is not symmetric');
@@ -173,17 +173,17 @@ classdef RoModTool < handle
             end            
         end
         %=================================================================%
-        % Description: This function converts the system dynamics model to
+        % Description: This function converts the system dynamics to
         % the matlab functions
         % @Inputs:
         % obj: Class object - symbolic object
         % matFuncRootPath: Matlab function root path - char type
-        % sysDynamicsMod: System dynamics model - symbolic object        
+        % sysDyn: System dynamics - symbolic object        
         % @Output:
         % sysDynMatPath: Matlab function path of system dynamics matrices - char type
         % sysDynPath: Matlab function path of system dynamics - char type
         %=================================================================%
-        function [sysDynMatPath, ssModPath, sysIDPath, sysFDPath] = getSysDynMod2MatFunc(obj, matFuncRootPath, sysDynMod)
+        function [sysDynMatPath, ssModPath, sysIDPath, sysFDPath] = sysDyn2MatFunc(obj, matFuncRootPath, sysDyn)
             if ~ischar(matFuncRootPath)
                 error('The Matlab function path should be char type');
             end
@@ -191,8 +191,8 @@ classdef RoModTool < handle
             if isnumeric(tmpControls)
                 tmpControls = sym(tmpControls);
             end
-            if (sysDynMod.passiveConInd ~= 0)
-                tmpControls(sysDynMod.passiveConInd) = sym('virCon');
+            if (sysDyn.passiveConInd ~= 0)
+                tmpControls(sysDyn.passiveConInd) = sym('virCon');
             end
             
             %% System dynamics matrices
@@ -212,7 +212,7 @@ classdef RoModTool < handle
                           ' Author: Quoc-Viet Dang';...
                           '======================================================================%';...
                           };  
-            matlabFunction(sysDynMod.M, sysDynMod.C, sysDynMod.G, 'File', sysDynMatPath, 'Vars', sysDynMatInputVars, 'Outputs', {'M', 'C', 'G'}, 'Sparse', true, 'Comments', sysDynMatFuncHeader);
+            matlabFunction(sysDyn.M, sysDyn.C, sysDyn.G, 'File', sysDynMatPath, 'Vars', sysDynMatInputVars, 'Outputs', {'M', 'C', 'G'}, 'Sparse', true, 'Comments', sysDynMatFuncHeader);
             
             %% State-space model
             nStates = length(obj.states);            
@@ -220,11 +220,11 @@ classdef RoModTool < handle
             velocities = obj.states((nJoints+1):end, 1);
             M = sym('M', [nJoints, nJoints]); C = sym('C', [nJoints, nJoints]); G = sym('G', [nJoints, 1]);
             dStates = [velocities; M\(obj.controls - C*velocities - G)];
-            ssModPath = fullfile(matFuncRootPath, 'getSysDyn2SSMod.m');
+            ssModPath = fullfile(matFuncRootPath, 'getStateSpaceModel.m');
             ssModInputVars = {obj.states, tmpControls, [M, C, G]};
             ssModFuncHeader = {'======================================================================%';...
                           ' Description: This function gives the state-space model of the dynamical system';...
-                          ' dStates = getSysDyn2SSMod(states, controls, [M, C, G])';...
+                          ' dStates = getStateSpaceModel(states, controls, [M, C, G])';...
                           ' @Inputs:';...
                           ' states: State variable of the dynamical system - column vector';...
                           ' controls: Control inputs of the dynamical system - column vector';...
@@ -239,13 +239,13 @@ classdef RoModTool < handle
                           };  
             matlabFunction(dStates, 'File', ssModPath, 'Vars', ssModInputVars, 'Outputs', {'dStates'}, 'Sparse', true, 'Comments', ssModFuncHeader);
             
-            %% Inverse dynamics of system: torques = M*d2q + C(q, dq)*dq + G(q) + transpose(J(q))*Fext
-            torques = M*obj.accelerations + C*velocities + G;            % Here, the external effort is not considered yet - should be added in futur
-            sysIDPath = fullfile(matFuncRootPath, 'getSysDyn2ID.m');
+            %% Inverse dynamics of system: jointTorq = M*d2q + C(q, dq)*dq + G(q) + transpose(J(q))*Fext
+            jointTorq = M*obj.accelerations + C*velocities + G;            % Here, the external effort is not considered yet - should be added in futur
+            sysIDPath = fullfile(matFuncRootPath, 'getInverseDynamics.m');
             sysIDInputVars = {obj.states, obj.accelerations, [M, C, G]};
             sysIDFuncHeader = {'======================================================================%';...
                           ' Description: This function gives the inverse(backward) dynamics of system';...
-                          ' torques = getSysDyn2ID(states, accelerations, [M, C, G])';...
+                          ' jointTorq = getInverseDynamics(states, accelerations, [M, C, G])';...
                           ' @Inputs:';...
                           ' states: State variable of the dynamical system - column vector';...
                           ' accelerations: Accelerations of the dynamical system - column vector';...
@@ -253,20 +253,20 @@ classdef RoModTool < handle
                           ' C: Coriolis matrix of the dynamical system';...
                           ' G: Gravity matrix of the dynamical system';...
                           ' @Output:';...
-                          ' torques: Torques of joint variables of the dynamical system';...
+                          ' jointTorq: Torques of joint variables of the dynamical system';...
                           ' Version: 1.0';...
                           ' Author: Quoc-Viet Dang';...
                           '======================================================================%';...
                           };  
-            matlabFunction(torques, 'File', sysIDPath, 'Vars', sysIDInputVars, 'Outputs', {'torques'}, 'Sparse', true, 'Comments', sysIDFuncHeader);
+            matlabFunction(jointTorq, 'File', sysIDPath, 'Vars', sysIDInputVars, 'Outputs', {'jointTorq'}, 'Sparse', true, 'Comments', sysIDFuncHeader);
             
-            %% Forward dynamics of system: d2q = inv(M)*(u - transpose(J(q))*Fext - C(q, dq)*dq - G(q))
-            d2q = M\(obj.controls - C*velocities - G);            % Here, the external effort is not considered yet - should be added in futur
-            sysFDPath = fullfile(matFuncRootPath, 'getSysDyn2FD.m');
+            %% Forward dynamics of system: jointAccel = inv(M)*(u - transpose(J(q))*Fext - C(q, dq)*dq - G(q))
+            jointAccel = M\(obj.controls - C*velocities - G);            % Here, the external effort is not considered yet - should be added in futur
+            sysFDPath = fullfile(matFuncRootPath, 'getForwardDynamics.m');
             sysFDInputVars = {obj.states, tmpControls, [M, C, G]};
             sysFDFuncHeader = {'======================================================================%';...
                           ' Description: This function gives the forward(direct) dynamics of system';...
-                          ' accelerations = getSysDyn2FD(states, controls, [M, C, G])';...
+                          ' jointAccel = getForwardDynamics(states, controls, [M, C, G])';...
                           ' @Inputs:';...
                           ' states: State variable of the dynamical system - column vector';...
                           ' controls: Control inputs of the dynamical system - column vector';...
@@ -274,12 +274,12 @@ classdef RoModTool < handle
                           ' C: Coriolis matrix of the dynamical system';...
                           ' G: Gravity matrix of the dynamical system';...
                           ' @Output:';...
-                          ' d2q: Accelerations of joint variables of the dynamical system';...
+                          ' jointAccel: Accelerations of joint variables of the dynamical system';...
                           ' Version: 1.0';...
                           ' Author: Quoc-Viet Dang';...
                           '======================================================================%';...
                           };  
-            matlabFunction(d2q, 'File', sysFDPath, 'Vars', sysFDInputVars, 'Outputs', {'accelerations'}, 'Sparse', true, 'Comments', sysFDFuncHeader);            
+            matlabFunction(jointAccel, 'File', sysFDPath, 'Vars', sysFDInputVars, 'Outputs', {'jointAccel'}, 'Sparse', true, 'Comments', sysFDFuncHeader);            
         end
     end
 end

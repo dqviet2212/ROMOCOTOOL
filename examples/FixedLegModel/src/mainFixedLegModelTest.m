@@ -31,7 +31,7 @@ states = [positions; velocities];
 controls = 0.3*ones(nJoints, 1);
 % System dynamics
 [M, C, G] = getSysDynMat(states, sysParams);
-dStates = getSysDynamics(states, controls, [M, C, G]);
+dStates = getSysDyn2SSMod(states, controls, [M, C, G]);
 d2q = getSysDyn2FD(states, controls, [M, C, G]);
 torques = getSysDyn2ID(states, d2q, [M, C, G]);
 %

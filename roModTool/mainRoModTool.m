@@ -34,21 +34,21 @@ sysParams = [m1; m2; l; g];
 
 %% System dynamics model
 roModToolObj = RoModTool(Ek, Ep, states, accelerations, controls, sysParams);
-sysDynMod = roModToolObj.getSysDynMod();
+sysDyn = roModToolObj.getSystemDynamics();
 matFuncRootPath = fullfile(fileparts(fileparts(fileparts([mfilename('fullpath'),'.m']))), 'build');
 if (exist(matFuncRootPath, 'dir') ~= 7)
     mkdir(matFuncRootPath);
 end
-[sysDynMatPath, ssModPath, sysIDPath, sysFDPath] = roModToolObj.getSysDynMod2MatFunc(matFuncRootPath, sysDynMod);
+[sysDynMatPath, ssModPath, sysIDPath, sysFDPath] = roModToolObj.sysDyn2MatFunc(matFuncRootPath, sysDyn);
 
 %% Results
-nStates = sysDynMod.nStates;
-nControls = sysDynMod.nControls;
-activeConInd = sysDynMod.activeConInd;
-passiveConInd = sysDynMod.passiveConInd;
-M = sysDynMod.M;
-C = sysDynMod.C;
-G = sysDynMod.G;
+nStates = sysDyn.nStates;
+nControls = sysDyn.nControls;
+activeConInd = sysDyn.activeConInd;
+passiveConInd = sysDyn.passiveConInd;
+M = sysDyn.M;
+C = sysDyn.C;
+G = sysDyn.G;
 %
 disp('******************************************************************');    
 fprintf('Number of state variable: nStates = %d\n', nStates);
