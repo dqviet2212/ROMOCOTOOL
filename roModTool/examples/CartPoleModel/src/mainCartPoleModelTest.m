@@ -1,21 +1,21 @@
 %*************************************************************************%
 % Project: ROMOCOTOOL
-% Name: mainRoModToolTest.m
+% Name: mainCartPoleModelTest.m
 % Type: matlab script
 % Version: 1.0
-% Description: This script is a RoModTool test sample 
+% Description: This script is a CartPole test sample 
 % Author: Quoc-Viet DANG
 %*************************************************************************%
 restoredefaultpath;
 clearvars; close all; clc
 
 %% Addpath
-roMoCoToolRootPath = fileparts(fileparts(fileparts([mfilename('fullpath'),'.m'])));
-roModToollBuildPath = fullfile(roMoCoToolRootPath, 'roModTool', 'build');
-addpath(roModToollBuildPath);
+roMoCoToolRootPath = fileparts(fileparts(fileparts(fileparts([mfilename('fullpath'),'.m']))));
+cartPoleBuildPath = fullfile(roMoCoToolRootPath, 'examples', 'CartPoleModel', 'build');
+addpath(cartPoleBuildPath);
 
 %% Physical parameters of the dynamical system
-sysParams = getRoModToolSysParams();
+sysParams = getCartPoleModelSysParams();
 
 %% System dynamics
 nJoints = 2;
