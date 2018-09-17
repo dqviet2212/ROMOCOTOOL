@@ -4,7 +4,7 @@
 % Type: matlab script
 % Version: 1.0
 % Description: This script is a sample how to use the modelling tool
-% RoModTool of ROMOCOTOOL project
+%              RoModTool of ROMOCOTOOL project
 % Author: Quoc-Viet DANG
 %*************************************************************************%
 restoredefaultpath;
@@ -13,7 +13,7 @@ tic
 
 %% Addpath
 roMoCoToolRootPath = fileparts(fileparts(fileparts(fileparts([mfilename('fullpath'),'.m']))));
-roModToolRootPath = fullfile(roMoCoToolRootPath, 'src', 'roModTool');
+roModToolRootPath = fullfile(roMoCoToolRootPath, 'roModTool', 'src');
 addpath(roModToolRootPath);
 
 %% Symbolic variables declaration
@@ -75,22 +75,22 @@ controls = [u1; u2; u3];
 sysParams = [m1; l1; L1; m2; l2; L2; m3; l3; L3; g];
 
 %% System dynamics model
-roModToolObj = RoModTool(Ek, Ep, states, accelerations, controls, sysParams);
-sysDynMod = roModToolObj.getSysDynMod();
-matFuncRootPath = fullfile(roMoCoToolRootPath, 'example', 'FixedLegModel', 'build');
+roModTool = RoModTool(Ek, Ep, states, accelerations, controls, sysParams);
+sysDyn = roModTool.getSystemDynamics();
+matFuncRootPath = fullfile(roMoCoToolRootPath, 'examples', 'FixedLegModel', 'build');
 if (exist(matFuncRootPath, 'dir') ~= 7)
     mkdir(matFuncRootPath);
 end
-[sysDynMatPath, ssModPath, sysIDPath, sysFDPath] = roModToolObj.getSysDynMod2MatFunc(matFuncRootPath, sysDynMod);
+[sysDynMatPath, ssModPath, sysIDPath, sysFDPath] = roModTool.sysDyn2MatFunc(matFuncRootPath, sysDyn);
 
 %% Results
-nStates = sysDynMod.nStates;
-nControls = sysDynMod.nControls;
-activeConInd = sysDynMod.activeConInd;
-passiveConInd = sysDynMod.passiveConInd;
-M = sysDynMod.M;
-C = sysDynMod.C;
-G = sysDynMod.G;
+nStates = sysDyn.nStates;
+nControls = sysDyn.nControls;
+activeConInd = sysDyn.activeConInd;
+passiveConInd = sysDyn.passiveConInd;
+M = sysDyn.M;
+C = sysDyn.C;
+G = sysDyn.G;
 disp('******************************************************************');    
 fprintf('Number of state variable: nStates = %d\n', nStates);
 disp('******************************************************************');    

@@ -1,13 +1,15 @@
 %*************************************************************************%
-% Author: Quoc-Viet DANG                                                  
 % Project: ROMOCOTOOL
-% Name: testRoModTool.m
+% Name: mainRoModTool.m
 % Type: matlab script
-% Version: 08 September 2018                                              
-% Description:
+% Version: 1.0
+% Description: This script is a sample how to use the modelling tool
+%              RoModTool of ROMOCOTOOL project
+% Author: Quoc-Viet DANG                                                  
 %*************************************************************************%
 restoredefaultpath;
 clearvars; close all; clc
+tic
 
 %% Symbolic variables declaration
 syms m1 m2 l g
@@ -33,13 +35,13 @@ controls = [u1; 0];
 sysParams = [m1; m2; l; g];
 
 %% System dynamics model
-roModToolObj = RoModTool(Ek, Ep, states, accelerations, controls, sysParams);
-sysDyn = roModToolObj.getSystemDynamics();
-matFuncRootPath = fullfile(fileparts(fileparts(fileparts([mfilename('fullpath'),'.m']))), 'build');
+roModTool = RoModTool(Ek, Ep, states, accelerations, controls, sysParams);
+sysDyn = roModTool.getSystemDynamics();
+matFuncRootPath = fullfile(fileparts(fileparts([mfilename('fullpath'),'.m'])), 'build');
 if (exist(matFuncRootPath, 'dir') ~= 7)
     mkdir(matFuncRootPath);
 end
-[sysDynMatPath, ssModPath, sysIDPath, sysFDPath] = roModToolObj.sysDyn2MatFunc(matFuncRootPath, sysDyn);
+[sysDynMatPath, ssModPath, sysIDPath, sysFDPath] = roModTool.sysDyn2MatFunc(matFuncRootPath, sysDyn);
 
 %% Results
 nStates = sysDyn.nStates;
@@ -71,4 +73,5 @@ disp('******************************************************************');
 disp('Root paths to system dynamics:')
 fprintf('%s\n%s\n%s\n%s\n', sysDynMatPath, ssModPath, sysIDPath, sysFDPath);
 
+toc
 return;

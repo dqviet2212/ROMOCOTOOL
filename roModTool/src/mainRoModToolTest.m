@@ -1,24 +1,24 @@
 %*************************************************************************%
 % Project: ROMOCOTOOL
-% Name: mainFixedLegModel.m
+% Name: mainRoModToolTest.m
 % Type: matlab script
 % Version: 1.0
-% Description: This script is a FixedLegModel test sample 
+% Description: This script is a RoModTool test sample 
 % Author: Quoc-Viet DANG
 %*************************************************************************%
 restoredefaultpath;
 clearvars; close all; clc
 
 %% Addpath
-roMoCoToolRootPath = fileparts(fileparts(fileparts(fileparts([mfilename('fullpath'),'.m']))));
-fixedLegModelBuildPath = fullfile(roMoCoToolRootPath, 'examples', 'FixedLegModel', 'build');
-addpath(fixedLegModelBuildPath);
+roMoCoToolRootPath = fileparts(fileparts(fileparts([mfilename('fullpath'),'.m'])));
+roModToollBuildPath = fullfile(roMoCoToolRootPath, 'roModTool', 'build');
+addpath(roModToollBuildPath);
 
 %% Physical parameters of the dynamical system
-sysParams = getFixedLegModelSysParams();
+sysParams = getRoModToolSysParams();
 
 %% System dynamics
-nJoints = 3;
+nJoints = 2;
 % Positions
 positions = 0.1*ones(nJoints, 1);
 % Velocities
@@ -26,7 +26,7 @@ velocities = 0.5*ones(nJoints, 1);
 % State variable
 states = [positions; velocities];
 % Controls
-controls = 0.3*ones(nJoints, 1);
+controls = [0.3; 0];
 % System dynamics
 [M, C, G] = getSysDynMat(states, sysParams);
 dStates = getStateSpaceModel(states, controls, [M, C, G]);
