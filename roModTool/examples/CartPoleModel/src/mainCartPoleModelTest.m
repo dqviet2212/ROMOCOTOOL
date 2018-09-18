@@ -3,7 +3,7 @@
 % Name: mainCartPoleModelTest.m
 % Type: matlab script
 % Version: 1.0
-% Description: This script is a CartPole test sample 
+% Description: This script is a CartPoleModel test sample 
 % Author: Quoc-Viet DANG
 %*************************************************************************%
 restoredefaultpath;
