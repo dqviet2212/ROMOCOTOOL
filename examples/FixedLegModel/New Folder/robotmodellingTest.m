@@ -1,8 +1,13 @@
 clearvars; close all; clc;
 
-nJoints = 3;
-robotStr = getJointLinkDef(nJoints);
-forwardKinematics = getForwardKinematics(robotStr, nJoints);
+%% Robot structure definition
+tic
+robotName = 'FixedLegModel';
+robot = getRobotStructure(robotName);
+robot = getForwardKinematics(robot);
+toc
+
+return;
 j1x = sym('j1x');
 j1y = sym('j1y');
 j1z = sym('j1z');
@@ -13,7 +18,7 @@ l1x = sym('l1x');
 l1y = sym('l1x');
 l1z = sym('l1x');
 
-matlabFunction(forwardKinematics.linkPos(1, 1, 1), 'File', 'Vars', [j1x; j1y; j1z; j1r; j1p; j1a; l1x; l1y; l1z], 'Outputs', {'link1Pos'}, 'Sparse', true);
+% matlabFunction(forwardKinematics.linkPos(1, 1, 1), 'File', 'Vars', [j1x; j1y; j1z; j1r; j1p; j1a; l1x; l1y; l1z], 'Outputs', {'link1Pos'}, 'Sparse', true);
 
 
 return;
