@@ -13,13 +13,11 @@ classdef (Abstract) RoModTool < handle
     end
     
     methods(Abstract)
-        getRobotStructure(obj)
-        getForwardKinematics(obj)
-        getSymPhysicalParams(obj)
-        getSymStateVariable(obj)
-        getRobotEnergy(obj)        
-        getSystemDynamics(obj)        
-        getMatlabFunction(obj, matFuncRootPath)
+        %% Robot Modelling Tool using the Euler-Lagrange method via energy-based approach
+        getEulerLagrangeRoModTool(obj)
+        
+        %% Robot Modelling Tool using the Newton-Euler method via torque/force balance approach
+        getNewtonEulerRoModTool(obj)
     end
     
     

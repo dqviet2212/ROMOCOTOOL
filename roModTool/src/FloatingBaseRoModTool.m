@@ -1,21 +1,21 @@
 %*************************************************************************%
 %=========================================================================%
 % Project: ROMOCOTOOL
-% Name: FixedBaseRoModTool.m
+% Name: FloatingBaseRoModTool.m
 % Type: matlab object
 % Version: 1.0
 % Description: This object class provides methods for the robot modelling
 % with a fixed base
 % Author: Quoc-Viet DANG
 %=========================================================================%
-classdef FixedBaseRoModTool < RoModTool
+classdef FloatingBaseRoModTool < RoModTool
     properties
         
     end    
         
     methods
         %% Constructor
-        function obj = FixedBaseRoModTool(robot)
+        function obj = FloatingBaseRoModTool(robot)
             
             obj = obj@RoModTool(robot);
             obj.robot = robot;
@@ -46,12 +46,35 @@ classdef FixedBaseRoModTool < RoModTool
             function getRobotStructure(obj)
                 %% Base
                 obj.robot.base.name = 'base';
-                obj.robot.base.origin.xyz = sym(zeros(3, 1));
-                obj.robot.base.origin.rpy = sym(zeros(3, 1));
-                obj.robot.base.origin.dxyz = sym(zeros(3, 1));        
-                obj.robot.base.origin.drpy = sym(zeros(3, 1));
-                obj.robot.base.mass = sym(zeros(1));
-                obj.robot.base.inertia = sym(zeros(3));
+                obj.robot.base.origin.xyz = str2sym(['px'; 'py'; 'pz']);
+                obj.robot.base.origin.rpy = str2sym(['ro'; 'po'; 'yo']);
+                obj.robot.base.origin.dxyz = str2sym(['dpx'; 'dpy'; 'dpz']);
+                obj.robot.base.origin.drpy = str2sym(['dro'; 'dpo'; 'dyo']);
+                obj.robot.base.origin.d2xyz = str2sym(['d2px'; 'd2py'; 'd2pz']);
+                obj.robot.base.origin.d2rpy = str2sym(['d2ro'; 'd2po'; 'd2yo']);
+                obj.robot.base.mass = sym('mB');
+                obj.robot.base.inertia(1, 1) = sym('ixxB');
+                obj.robot.base.inertia(1, 2) = sym('ixyB');
+                obj.robot.base.inertia(1, 3) = sym('ixzB');
+                obj.robot.base.inertia(2, 1) = sym('ixyB');
+                obj.robot.base.inertia(2, 2) = sym('iyyB');
+                obj.robot.base.inertia(2, 3) = sym('iyzB');
+                obj.robot.base.inertia(3, 1) = sym('ixzB');
+                obj.robot.base.inertia(3, 2) = sym('iyzB');
+                obj.robot.base.inertia(3, 3) = sym('izzB');
+                obj.robot.base.symJointVar = [obj.robot.base.origin.xyz;...
+                                              obj.robot.base.origin.rpy];
+                obj.robot.base.symdJointVar = [obj.robot.base.origin.dxyz;...
+                                               obj.robot.base.origin.drpy];
+                obj.robot.base.symd2JointVar = [obj.robot.base.origin.d2xyz;...
+                                                obj.robot.base.origin.d2rpy];
+                obj.robot.base.symPhysicalParams = [obj.robot.base.mass;...
+                                                    obj.robot.base.inertia(1, 1);...
+                                                    obj.robot.base.inertia(1, 2);...
+                                                    obj.robot.base.inertia(1, 3);...
+                                                    obj.robot.base.inertia(2, 2);...
+                                                    obj.robot.base.inertia(2, 3);...
+                                                    obj.robot.base.inertia(3, 3)];
 
                 %% Kinematic chain                                    
                 nKinematicChains = size(obj.robot.kinematicChains, 2);    
@@ -97,13 +120,15 @@ classdef FixedBaseRoModTool < RoModTool
                 %% Base
                 basePos = obj.robot.base.origin.xyz;
                 baseOri = obj.robot.base.origin.rpy;
+                dBasePos = obj.robot.base.origin.dxyz;
+                dBaseOri = obj.robot.base.origin.drpy;
                 baseRot = Rpy2Mat(baseOri);
 
                 %% Kinematic chain
                 nKinematicChains = size(obj.robot.kinematicChains, 2);
                 nChainJoints = zeros(nKinematicChains, 1);
                 for i1 = 1:nKinematicChains
-                    nChainJoints(i1) = size(obj.robot.kinematicChains(i1).joint, 2);
+                    nChainJoints(i1) = 6 + size(obj.robot.kinematicChains(i1).joint, 2);
                 end
                 nChainJoints = [0; nChainJoints];    
                 for i1 = nKinematicChains:-1:1
@@ -118,10 +143,10 @@ classdef FixedBaseRoModTool < RoModTool
                     jointVar = sym(['q', num2str(i1)], [nJoints, 1]);
                     dJointVar = sym(['dq', num2str(i1)], [nJoints, 1]);                    
                     % Extended joint variable
-                    exJointVar = jointVar;
-                    dExJointVar = dJointVar;
-                    jointPosJaco = sym(zeros(3, nJoints, nJoints));
-                    linkPosJaco = sym(zeros(3, nJoints, nJoints));
+                    exJointVar = [basePos; baseOri; jointVar];
+                    dExJointVar = [dBasePos; dBaseOri; dJointVar];
+                    jointPosJaco = sym(zeros(3, 6 + nJoints, nJoints));
+                    linkPosJaco = sym(zeros(3, 6 + nJoints, nJoints));
                     % Joint1
                     jointRot(:, :, 1) = baseRot*Rpy2Mat(obj.robot.kinematicChains(i1).joint(1).origin.rpy);
                     jointPos(:, :, 1) = (basePos + baseRot*obj.robot.kinematicChains(i1).joint(1).origin.xyz);
@@ -187,6 +212,7 @@ classdef FixedBaseRoModTool < RoModTool
                 symGravityAccel = sym('g');
 
                 %% Symbolic physical parameters
+                symBasePhysicalParams = obj.robot.base.symPhysicalParams;
                 nKinematicChains = size(obj.robot.kinematicChains, 2);   
                 symJointPhysicalParams = [];
                 symLinkPhysicalParams = [];
@@ -197,7 +223,7 @@ classdef FixedBaseRoModTool < RoModTool
                         symLinkPhysicalParams = [symLinkPhysicalParams; obj.robot.kinematicChains(i1).link(i2).symPhysicalParams]; %#ok<AGROW>
                     end
                 end    
-                obj.robot.symPhysicalParams = [symGravityAccel; symJointPhysicalParams; symLinkPhysicalParams];
+                obj.robot.symPhysicalParams = [symGravityAccel; symBasePhysicalParams; symJointPhysicalParams; symLinkPhysicalParams];
             end
 
             %% getSymStateVariable
@@ -211,7 +237,7 @@ classdef FixedBaseRoModTool < RoModTool
                     symdJointVars = [symdJointVars; obj.robot.forwardKinematics.chain(i1).symdJointVar]; %#ok<AGROW>
                     
                 end            
-                obj.robot.symStateVariable = [symJointVars; symdJointVars];                
+                obj.robot.symStateVariable = [obj.robot.base.symJointVar; symJointVars; obj.robot.base.symdJointVar; symdJointVars];
             end            
 
             %% getRobotEnergy
@@ -219,9 +245,15 @@ classdef FixedBaseRoModTool < RoModTool
                 %% Gravity acceleration
                 symGravityAccel = obj.robot.symPhysicalParams(1);
 
-                %% Base
-                kinematicEnergy = sym(zeros(1));
-                potentialEnergy = sym(zeros(1));
+                %% Base                
+                baseIc = obj.robot.base.inertia;    
+                baseR = obj.robot.base.origin.xyz;
+                baseM = obj.robot.base.mass;
+                baseV = obj.robot.base.origin.dxyz;
+                baseId = baseIc + baseM*(baseR'*baseR*eye(3) - baseR*baseR');
+                baseW = obj.robot.base.origin.drpy;
+                kinematicEnergy = 0.5*(baseM*(baseV'*baseV) + baseW'*baseId*baseW);
+                potentialEnergy = baseM*symGravityAccel*baseR(3, 1);
 
                 %% Kinematic chain    
                 nKinematicChains = size(obj.robot.kinematicChains, 2);    
@@ -316,7 +348,7 @@ classdef FixedBaseRoModTool < RoModTool
                     symAccelVars = [symAccelVars; sym(['d2q', num2str(i1)], [nJoints, 1])]; %#ok<AGROW>
                     symControlVars = [symControlVars; sym(['u', num2str(i1)], [nJoints, 1])]; %#ok<AGROW>
                 end            
-                obj.robot.symAccelerationVariable = symAccelVars;
+                obj.robot.symAccelerationVariable = [obj.robot.base.symd2JointVar; symAccelVars];
                 obj.robot.symControlVariable = symControlVars;
             end            
 
@@ -560,7 +592,10 @@ classdef FixedBaseRoModTool < RoModTool
                     matlabFunction(gravityTorqueOutputVars, 'File', gravityTorqueSymMatFuncPath, 'Vars', symInputVars, 'Outputs', {'gravityTorque'}, 'Comments', gravityTorqueHeader, 'Sparse', true);
                 else
                     matlabFunction(gravityTorqueOutputVars, 'File', gravityTorqueSymMatFuncPath, 'Vars', symInputVars, 'Outputs', {'gravityTorque'}, 'Comments', gravityTorqueHeader);
-                end                
+                end
+                
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                if 0
                 % State-space model                        
                 nStates = obj.robot.systemDynamics.nStates;
                 nJoints = 0.5*nStates;                
@@ -636,6 +671,7 @@ classdef FixedBaseRoModTool < RoModTool
                     matlabFunction(jointAccel, 'File', sysFDPath, 'Vars', sysFDInputVars, 'Outputs', {'jointAccel'}, 'Comments', sysFDFuncHeader, 'Sparse', true);
                 else
                     matlabFunction(jointAccel, 'File', sysFDPath, 'Vars', sysFDInputVars, 'Outputs', {'jointAccel'}, 'Comments', sysFDFuncHeader); 
+                end
                 end
             end
         end
